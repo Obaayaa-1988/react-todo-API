@@ -194,7 +194,7 @@ const sendEmail = (req, res) =>{
         service: "gmail",
         auth: {
           user:"ashbella333@gmail.com",
-          pass: "arvid2019",
+          pass: "arjfjfdkjkdklkdj",
 
 
 
