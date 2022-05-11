@@ -8,7 +8,9 @@ const {
     saveRegister,
     saveLogin,
     todoLogout,
-    allTodosByUser
+    allTodosByUser,
+    resetPassword,
+    sendEmail
 
 } = require('../controller/registerController')
 
@@ -17,6 +19,8 @@ router.post('/signup', saveRegister);
 router.post('/login', saveLogin)
 router.get('/logout', todoLogout)
 router.get("/fetchUser/:id", allTodosByUser)
+router.post("/reset", resetPassword)
+router.post('/mailing', sendEmail)
 
 
 

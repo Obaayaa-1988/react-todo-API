@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 8080
 //middlewares
 app.use(cors({
     credentials: true, //metedata we are passing along
-    origin: "http://localhost:3002",
+    origin: "http://localhost:3000",
     methods: "GET, POST, OPTIONS, PUT, DELETE"
 }))
 
@@ -63,10 +63,9 @@ mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology : true })
 }).catch(err => {
     console.log(err)
 })
-
-
 app.use(todoRoutes)
 app.use(registerRouter)
+
 
 
 
