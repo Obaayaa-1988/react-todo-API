@@ -5,7 +5,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken")
 const cookieParser = require("cookie-parser")
 const { cookie } = require("express/lib/response")
-const nodemailer = require("nodemailer")
+const nodemailer = require("nodemailer");
+const { v4: uuidv4 } = require('uuid');
 
 
 //saving user to the database after relation with todomodel
@@ -186,26 +187,20 @@ const resetPassword = async (req, res) =>{
    // res.send("test")
 }
 
-//sending an email from your email to another email
+//sending an email from your email to another email using nodemon
 const sendEmail = (req, res) =>{
     const {email} = req.body
+    //this is for login in to your own email
 
     const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
           user:"ashbella333@gmail.com",
-          pass: "arjfjfdkjkdklkdj",
-
-
-
-
-
-
-
+          pass:"omuulhndcpbqlzdg",
 
         },
     });
-
+//this is for sending or composing an email and sending to someone
     const mailOptions = {
         from: "ashbella333@gmail.com",
         to: `${email}`,
@@ -224,7 +219,74 @@ const sendEmail = (req, res) =>{
 
 
 }
+//sending a link for a user to reset their password after they have gotten
 
+const forgotPassword = async (req, res) =>{
+    try {
+
+        const { email } = req.params;
+
+        const resetToken = uuidv4();
+
+        const updateUserToken = await UsersModel.findOneAndUpdate({ email }, { resetToken }, { new: true })
+
+        if(!updateUserToken) {
+          return  res.status(401).json({ msg: "email cannot be found"})
+          
+
+        }
+
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user:"ashbella333@gmail.com",
+              pass:"omuulhndcpbqlzdg",
+    
+            },
+        });
+    
+        const mailOptions = {
+            from: "ashbella333@gmail.com",
+            to: `${email}`,
+            subject: "password reset",
+            text: `to reset your password, click this link: http://localhost:3000/reset-password${resetToken}`,
+            replyTo: "ashbella333@gmail.com"
+        };
+    
+        transporter.sendMail(mailOptions, function (error, info) {
+            if(error) {
+                console.log(error)
+            } else {
+                console.log("Email sent: " + info.response )
+            }
+        });
+        res.send('email sent, check your mail')
+    
+    } catch (error) {
+        console.log(error)
+        
+    }
+
+
+}
+
+//after the reset password(after the user forgot her) is sent to the user it is time for the user to create a new password
+const resetForgottenPassword = async (req, res) => {
+    try {
+        const { resetToken } = req.params;
+        const { newPassword } = req.body;
+
+        const hash = await bcrypt.hash(newPassword, 10);
+
+        await UsersModel.findOneAndUpdate({ resetToken }, { password: hash }, { new: true })
+        
+        res.sendStatus(200)
+        
+    } catch (error) {
+        console.log(error)
+        
+    }
+}
 
 
 
@@ -239,7 +301,9 @@ module.exports = {
     todoLogout,
     allTodosByUser, 
     resetPassword,
-    sendEmail
+    sendEmail,
+    forgotPassword,
+    resetForgottenPassword
 
 
 }

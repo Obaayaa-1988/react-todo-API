@@ -26,7 +26,11 @@
              type: Schema.Types.ObjectId,
              ref: 'Todolist',
          },
-     ]
+     ],
+
+     resetToken: {
+         type: String
+     }
 
  }, { timestamps: true})
  

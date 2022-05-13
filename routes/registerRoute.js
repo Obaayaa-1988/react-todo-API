@@ -10,7 +10,9 @@ const {
     todoLogout,
     allTodosByUser,
     resetPassword,
-    sendEmail
+    sendEmail,
+    forgotPassword,
+    resetForgottenPassword
 
 } = require('../controller/registerController')
 
@@ -20,6 +22,10 @@ router.post('/login', saveLogin)
 router.get('/logout', todoLogout)
 router.get("/fetchUser/:id", allTodosByUser)
 router.post("/reset", resetPassword)
+router.put("/forgot-password/:email", forgotPassword)
+router.put("/:resetToken/reset-password", resetForgottenPassword)
+
+//route for sending email
 router.post('/mailing', sendEmail)
 
 
