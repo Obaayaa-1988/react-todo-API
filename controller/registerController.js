@@ -1,6 +1,6 @@
 const express = require("express")
 const UsersModel = require('../model/todoRegisterModel');
-const { handleErrors, generateToken, deleteToken } = require("../utility/registerUtility");
+const { handleErrors, generateToken } = require("../utility/registerUtility");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken")
 const cookieParser = require("cookie-parser")
@@ -43,16 +43,18 @@ const saveRegister = async (req, res) => {
         // console.log(error.errors.email.properties.message)
 
         if(error?.errors?.email.properties?.path === 'email'){
-            res.json(error.errors.email.properties.message)
+           return res.json(error.errors.email.properties.message)
         }
         
 
         if(error?.errors?.password?.properties?.path === 'password'){
-            res.json(error.errors.password.properties.message)
+          return  res.json(error.errors.password.properties.message)
         }
 
         if(error.code === 11000){
             res.status(409).json(error)
+
+
 
 
         }
@@ -173,16 +175,23 @@ const resetPassword = async (req, res) =>{
                     const hash = await bcrypt.hash(newPassword, 10)
                     
 
-                    await UsersModel.findOneAndUpdate({_id:decoded.id}, {password:hash}, {new: true})
+                    const updateUserPassword = await UsersModel.findOneAndUpdate({_id:decoded.id}, {password:hash}, {new: true})
                     res.send('updated')
+                }
+
+                if(updateUserPassword){
+                    res.cookie("jwt", "", {maxAge: -1 });
+                    return res.status(200).json({msg: "password reset successful"})
+
                 }
                 
             } catch (error) {
                 console.log(error)
-
-                
+                return res.sendStatus(500)     
             }
         });
+    } else {
+        return res.status(403).json({msg: "token unavailable"})
     }
    // res.send("test")
 }
@@ -223,19 +232,20 @@ const sendEmail = (req, res) =>{
 
 const forgotPassword = async (req, res) =>{
     try {
-
+//we are using req.params for the email because each user has a unique email address
+//and will be identified by that email(resetToken)
         const { email } = req.params;
-
+//uuidva to generate strings which will change the email when sent
         const resetToken = uuidv4();
-
+//find email of the user from the db after, the email is updated with the resetToken string generated which will 
+//will replace the real email of the user
         const updateUserToken = await UsersModel.findOneAndUpdate({ email }, { resetToken }, { new: true })
-
+//if the user with their email is not found in the db an error message is sent back
         if(!updateUserToken) {
           return  res.status(401).json({ msg: "email cannot be found"})
-          
-
         }
 
+// if the users email is available in the db then email from the application owner is sent to the user to change the password
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
@@ -244,12 +254,14 @@ const forgotPassword = async (req, res) =>{
     
             },
         });
-    
+    //the user is required to put in their email and the reset password link sent to them
+    //into their mail, they just click the link and an interface pops up for them to
+    //put in a new password
         const mailOptions = {
             from: "ashbella333@gmail.com",
             to: `${email}`,
             subject: "password reset",
-            text: `to reset your password, click this link: http://localhost:3000/reset-password${resetToken}`,
+            text: `to reset your password, click this link: http://localhost:3000/reset-password/${resetToken}`,
             replyTo: "ashbella333@gmail.com"
         };
     
@@ -260,6 +272,7 @@ const forgotPassword = async (req, res) =>{
                 console.log("Email sent: " + info.response )
             }
         });
+        //success message sent to the user when password change link is sent
         res.send('email sent, check your mail')
     
     } catch (error) {
@@ -272,12 +285,15 @@ const forgotPassword = async (req, res) =>{
 
 //after the reset password(after the user forgot her) is sent to the user it is time for the user to create a new password
 const resetForgottenPassword = async (req, res) => {
+    //a user can now input in a new password for their accound when
+    //they click on the password reset link
     try {
         const { resetToken } = req.params;
         const { newPassword } = req.body;
-
+//after a user put in a new password it is then hashed
         const hash = await bcrypt.hash(newPassword, 10);
-
+//after hashing the password it is then updated with the resetToken which wass already saved in the database when the reset password link was 
+//sent to the user
         await UsersModel.findOneAndUpdate({ resetToken }, { password: hash }, { new: true })
         
         res.sendStatus(200)

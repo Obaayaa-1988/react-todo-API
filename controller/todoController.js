@@ -4,42 +4,42 @@ const mongoose = require('mongoose');
 
 
 //saving or adding a todo to the mongodb server /database
- const addTodo = async (req, res) =>{
-     try {
-         const { id } = req.params;
-         const { todo } = req.body;
+const addTodo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { todo } = req.body;
 
-         const data = {
-             todo,
-             user: id
-        
-         }
-          //destructuring the id so we dont type it
-         const newData = { ...data, user: id}
+        const data = {
+            todo,
+            user: id
 
-         const dataToStore = await new ToModel(newData);
+        }
+        //destructuring the id so we dont type it
+        const newData = { ...data, user: id }
 
-         //addng todo to todomodel
-         const saveData = await dataToStore.save();
+        const dataToStore = await new ToModel(newData);
 
-         //fetching the user
-         const fetchUser = await UsersModel.findById(id)
+        //addng todo to todomodel
+        const saveData = await dataToStore.save();
 
-         //pushing the todos to the
-         fetchUser.todos.push(saveData)
+        //fetching the user
+        const fetchUser = await UsersModel.findById(id)
 
-         //saving the fetch user
-         await fetchUser.save()
+        //pushing the todos to the
+        fetchUser.todos.push(saveData)
 
-         res.status(201).json(fetchUser)
-        
-     } catch (error) {
-         console.log(error)
-         res.status(500).json(error)
-        
-     }
+        //saving the fetch user
+        await fetchUser.save()
 
- }
+        res.status(201).json(fetchUser)
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json(error)
+
+    }
+
+}
 
 
 
@@ -75,7 +75,7 @@ const fetchTodos = (req, res) => {
 
 const fetchTodo = (req, res) => {
     ToModel.findById(req.params.id).then(result => {
-        if(result){
+        if (result) {
             res.send(result)
         }
     }).catch(err => console.log(err))
@@ -92,18 +92,18 @@ const deleteTodo = (req, res) => {
 
 //updating a particula todo using it unique id
 const updateTodo = (req, res) => {
-    
-    const {status } = req.body;
+
+    const { status } = req.body;
 
     const dataTodo = {
-       status
+        status
     };
-    ToModel.updateOne({_id: req.params.id}, dataTodo)
-    .then((results) => {
-        res.send(results)
-    }).catch((err) => {
-        console.log({message: "updated successfully"})
-    })
+    ToModel.updateOne({ _id: req.params.id }, dataTodo)
+        .then((results) => {
+            res.send(results)
+        }).catch((err) => {
+            console.log({ message: "updated successfully" })
+        })
 
 
 }
@@ -121,10 +121,10 @@ const updateTodo = (req, res) => {
 module.exports = {
     addTodo,
     fetchTodos,
-fetchTodo,
+    fetchTodo,
     deleteTodo,
     updateTodo,
-    
-    
+
+
 
 }
