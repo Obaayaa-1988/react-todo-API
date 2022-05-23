@@ -21,6 +21,18 @@
          required: [true, "Please enter a password"],
          minlength: [5, "Please the password lenght must be above five"]
      },
+
+     emailToken: {
+        type: String,
+        
+    },
+     
+
+     isVerified: {
+         type: Boolean,
+         
+     },
+
      todos: [
          {
              type: Schema.Types.ObjectId,
@@ -34,7 +46,7 @@
 
  }, { timestamps: true})
  
- //before save
+ //before saving to the database
 
 //  RegisterSchema.pre("save", async function(next) {
 //      const salt = await bcrypt.genSalt();

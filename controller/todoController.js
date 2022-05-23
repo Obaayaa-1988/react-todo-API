@@ -62,6 +62,9 @@ const addTodo = async (req, res) => {
 
 //  }
 
+
+
+
 //fetching all todos from the database or mongodb server
 const fetchTodos = (req, res) => {
     ToModel.find().then(results => {

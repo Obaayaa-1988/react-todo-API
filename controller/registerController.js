@@ -7,37 +7,75 @@ const cookieParser = require("cookie-parser")
 const { cookie } = require("express/lib/response")
 const nodemailer = require("nodemailer");
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
 
-//saving user to the database after relation with todomodel
+//saving user to the database after relationship with todomodel
 const saveRegister = async (req, res) => {
     try {
         //destructuring
         const { username, password, email } = req.body;
+
         const hashed = bcrypt.hashSync(password, 10)
         const addUser = await new UsersModel({
             username,
             password : hashed,
             email,
+            emailToken:  uuidv4(), // a token is generated (uuidv4 string ) for user when he/she signs up this generated token
+                                  //will be used to verify the user ad saved to the database
+            isVerified: false
+
         });
+        //after a user put in the right credential he/she is then saved in the database and an id generated for the user in the db
         const user = await addUser.save();
-        //if user details is correct and saves to the database
-        //generate token with the id and set cookie with the token
+        //if user details is correct and it is then save to the database
+        //generate token with the id and a cookie set with the token
         if(user) {
-            //generate token
+            //after a user gets saved to the database a token is generated for the user
             const token = generateToken(user._id);
-            //use token to set cookie
-            res.cookie("jwt", token, {
-                maxAge: 2 * 24 * 60 * 60 * 1000,
-                httpOnly: true,
-            });
+            //user token to set cookie
+            // res.cookie("jwt", token, {
+            //     maxAge: 2 * 24 * 60 * 60 * 1000,
+            //     httpOnly: true,
+            // });
 
             console.log(token)
             console.log("user created")
-
         }
-        res.status(201).json({ user })
+        res.status(201).json({ user, message: "link has been sent verify your email" })
         console.log(user)
+
+//an email link is sent to the user to verify their account as the user signs up with his/her credebtials
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user:"ashbella333@gmail.com",
+              pass:"omuulhndcpbqlzdg",
+    
+            },
+        });
+  //confirmToken(token) generated token is added to the email link and sent to the user and saved in the database
+        const confirmToken = addUser.emailToken;
+
+        const mailOptions = {
+            from: "ashbella333@gmail.com",
+            to: addUser.email,
+            subject: "verify your email",
+            text: `to be a verified user, click this link: http://localhost:3000/verified-email/${confirmToken}`,
+            replyTo: "ashbella333@gmail.com"
+        };
+    
+        transporter.sendMail(mailOptions, function (error, info) {
+            if(error) {
+                console.log(error)
+            } else {
+                console.log("Email sent: " + info.response )
+            }
+        });
+        res.json('verify email link sent, check your mail to verify your email')
+
+
+
         
     } catch (error) {
         // console.log(error.errors.email.properties.message)
@@ -53,10 +91,6 @@ const saveRegister = async (req, res) => {
 
         if(error.code === 11000){
             res.status(409).json(error)
-
-
-
-
         }
         
         
@@ -64,6 +98,49 @@ const saveRegister = async (req, res) => {
 
 }
 
+//verify email
+//after the verify email link is sent to the user the user clicks on the link 
+const emailVerified= async (req, res) => {
+    try {
+        //we use the token generated for the user when he/she signed up to find the user from the database 
+        const { token } = req.params
+        //after we find the user from the data with it email token and we update it to null because we don not need anymore
+        const user = await UsersModel.findOne({emailToken: token})
+        if(user){
+            user.emailToken = null,
+            user.isVerified = true
+//after the emailToken has been set to null and isVerified change the user is again saved to the database
+            await user.save()
+            
+
+            console.log("bonjour user")
+        }else {
+            console.log("verify your email please")
+
+        }
+        
+    } catch (error) {
+        console.log(error)
+        
+    }
+
+}
+
+//after a user has verified email
+const verifyEmail = async(req, res, next) =>{
+    try {
+        const user = await UsersModel.findOne({email: req.body.email})
+        if(user.verified === true){
+            next
+        } else{
+            console.log('please check your email to verify your account')
+        }
+        
+    } catch (error) {
+        console.log(error)
+        
+    }
+}
 
 
 // const saveRegister = async(req, res) => {
@@ -97,11 +174,10 @@ const saveRegister = async (req, res) => {
 const saveLogin = async (req, res) => {
     const { email, password } = req.body;
     try {
-
         const user = await UsersModel.findOne({email})
-         
+        // const verifiedUser = user.isVerified
         if(user) {
-            const isSame = await bcrypt.compare(password, user.password);
+             const isSame = await bcrypt.compare(password, user.password);
 
             if(isSame) {
                 const token = generateToken(user._id);
@@ -111,8 +187,9 @@ const saveLogin = async (req, res) => {
                 res.json({errors: "Incorrect Password"})
             }
         } else {
-            res.json({errors: " Email doesn't exist please sign up"})
-        }
+            res.json({errors: " Email or password doesn't exist please sign up"})
+
+        }    
         
     } catch (error) {
         const errors = handleErrors(error)
@@ -163,7 +240,7 @@ const resetPassword = async (req, res) =>{
                     const identical = await bcrypt.compare(password, user.password)
 
                     if(!identical){
-                        return res.status(401).json({message: "wrong credentials"})
+                        return res.status(400).json({message: "wrong credentials"})
                     }
 
                     const pass = await bcrypt.compare(newPassword, user.password)
@@ -319,7 +396,9 @@ module.exports = {
     resetPassword,
     sendEmail,
     forgotPassword,
-    resetForgottenPassword
+    resetForgottenPassword,
+    emailVerified,
+    verifyEmail
 
 
 }
