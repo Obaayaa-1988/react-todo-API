@@ -15,6 +15,7 @@ const addTodo = async (req, res) => {
 
         }
         //destructuring the id so we dont type it
+        //
         const newData = { ...data, user: id }
 
         const dataToStore = await new ToModel(newData);

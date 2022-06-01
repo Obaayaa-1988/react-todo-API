@@ -18,8 +18,10 @@ const dotenv = require("dotenv").config()
 require('dotenv').config();
 const cookieParser = require("cookie-parser")
 //const todosController = require('./controller/todoController')
-const morgan = require('morgan')
+const morgan = require('morgan');
+const { generateToken }= require("./utility/registerUtility")
 const app = express();
+const {configEmail} = require("./utility/sendMail.config")
 
 
 const PORT = process.env.PORT || 8080
@@ -28,7 +30,7 @@ const PORT = process.env.PORT || 8080
 //middlewares
 app.use(cors({
     credentials: true, //metedata we are passing along
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3003",
     methods: "GET, POST, OPTIONS, PUT, DELETE"
 }))
 

@@ -59,6 +59,7 @@ const saveRegister = async (req, res) => {
 
         const mailOptions = {
             from: "ashbella333@gmail.com",
+            
             to: addUser.email,
             subject: "verify your email",
             text: `to be a verified user, click this link: http://localhost:3000/verified-email/${confirmToken}`,
@@ -111,7 +112,7 @@ const emailVerified= async (req, res) => {
             user.isVerified = true
 //after the emailToken has been set to null and isVerified change the user is again saved to the database
             await user.save()
-            
+
 
             console.log("bonjour user")
         }else {
@@ -192,7 +193,7 @@ const saveLogin = async (req, res) => {
         }    
         
     } catch (error) {
-        const errors = handleErrors(error)
+        console.log(error)
         
     }
 }
